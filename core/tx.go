@@ -118,7 +118,7 @@ func (t SignedTx) IsAuthentic() (bool, error){
 	}
 
 	recoveredPubKeyBytes := elliptic.Marshal(crypto.S256(), recoveredPubKey.X, recoveredPubKey.Y) 
-	recoveredPubKeyBytesHash := crypto.Keecak256(recoveredPubKeyBytes[1:]) 
+	recoveredPubKeyBytesHash := crypto.Keccak256(recoveredPubKeyBytes[1:]) 
 	recoveredAccount := common.BytesToAddress(recoveredPubKeyBytesHash[12:]) 
 
 	return recoveredAccount.Hex() == t.From.Hex(), nil 

@@ -39,16 +39,16 @@ type Block struct{
 }
 
 type BlockHeader struct{
-	Parent Hash `json:parent"`
+	Parent Hash `json:"parent"`
 	Number uint64 `json:"number"` 
-	Nonce uint32 `json:nonce`
+	Nonce uint32 `json:"nonce"`
 	Time uint64 `json:"time"` 
-	Miner common.Address `json:miner`
+	Miner common.Address `json:"miner"`
 }
 
 type BlockFS struct{
-	Key Hash `json:key` 
-	Value Block `json:block`
+	Key Hash `json:"key"` 
+	Value Block `json:"block"`
 }
 
 func NewBlock(parent Hash, number uint64, nonce uint32, time uint64, miner common.Address, txs []SignedTx) Block{

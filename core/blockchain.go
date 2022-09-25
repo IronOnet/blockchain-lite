@@ -10,15 +10,9 @@ import (
 	"github.com/irononet/blockchain-lite/utils/file/fs"
 )
 
-const (
-	TxGas = 21 
-	TxGasPriceDefault = 1
-	TxFee = uint(50)
-)
 
-type State struct{
-	
-}
+
+
 
 func GetNextBlock(blockHash Hash, dbDir string) ([]Block, error){
 	f , err := os.OpenFile(fs.getBlocksDBFilePath(dbDir), os.O_RDONLY, 0600) 

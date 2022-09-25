@@ -7,7 +7,7 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/irononet/blockchain-lite/utils/file/fs"
+	//"github.com/irononet/blockchain-lite/utils/file"
 )
 
 
@@ -15,7 +15,7 @@ import (
 
 
 func GetNextBlock(blockHash Hash, dbDir string) ([]Block, error){
-	f , err := os.OpenFile(fs.getBlocksDBFilePath(dbDir), os.O_RDONLY, 0600) 
+	f , err := os.OpenFile(getBlocksDBFilePath(dbDir), os.O_RDONLY, 0600) 
 	if err != nil{
 		return nil, err 
 	}
@@ -60,31 +60,37 @@ func GetBlockByHeightOrHash(state *State, height uint64, hash, dataDir string) (
 
 	key, ok := state.HeightCache[height] 
 	if hash != ""{
-		key, ok = state.HeightCache[hash]
+		key, ok = state.HashCache[hash]
 	}
 
 	if !ok{
-		if hash != ""{
-			return block, fmt.Errorf("invalid hash: '%v'", hash)
+		if hash == ""{
+			return block, fmt.Errorf("invalid hash: %v", hash)
 		}
-
-		return block, fmt.Errorf("invalid height: '%v'", height) 
+		return block, fmt.Errorf("invalid height: '%v'", height)
 	}
 
-	f, err := os.OpenFile(fs.getBlocksDBFilePath(dataDir), os.O_RDONLY, 0600)
+	f, err := os.OpenFile(getBlocksDBFilePath(dataDir), os.O_RDONLY, 0600) 
+	if err != nil{
+		return block, err 
+	}
+
+	defer f.Close() 
+
+	_, err = f.Seek(key, 0) 
 	if err != nil{
 		return block, err 
 	}
 
 	scanner := bufio.NewScanner(f) 
 	if scanner.Scan(){
-		if err := scanner.Err(); err != nil{
-			return block , err 
+		if err := scanner.Err(); err!= nil{
+			return block, err 
 		}
 
-		err = json.Unmarshal(scanner.Bytes(), &block) 
+		err = json.Unmarshal(scanner.Bytes(), &block)
 		if err != nil{
-			return block, err
+			return block, err 
 		}
 	}
 	return block, nil 

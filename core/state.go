@@ -9,6 +9,7 @@ import (
 	"sort" 
 
 	"github.com/ethereum/go-ethereum/common"
+	
 )
 
 
@@ -35,7 +36,7 @@ type State struct{
 
 
 func NewStateFromDisk(dataDir string, miningDifficulty uint)(*State, error){
-	err := InitialDirIfNotExists(dataDir, []byte(genesisJson))
+	err := InitDirIfNotExist(dataDir, []byte(genesisJson))
 	if err != nil{
 		return nil, err 
 	}
@@ -60,7 +61,7 @@ func NewStateFromDisk(dataDir string, miningDifficulty uint)(*State, error){
 
 	scanner := bufio.NewScanner(f)  
 
-	state := &State{balances, account2nonce, f, Block{}, Hash{}, false, miningDifficulty, gen.ForkBCIP1, map[uint64]int64{}}
+	state := &State{balances, account2nonce, f, Block{}, Hash{}, false, miningDifficulty, gen.ForkBCIP1, map[string]int64{}, map[uint64]int64{}}
 
 	// set file position 
 	filePos := int64(0) 
@@ -255,6 +256,68 @@ func applyBlock(b Block, s *State) error{
 
 
 func applyTXs(txs []SignedTx, s *State) error{
-	//TODO: Implement tomorrow 
+	sort.Slice(txs, func(i, j int) bool{
+		return txs[i].Time < txs[j].Time
+	})
+
+	for _, tx := range txs{
+		err := ApplyTx(tx, s) 
+		if err != nil{
+			return err 
+		}
+	}
+
+	return nil 
+}
+
+func ApplyTx(tx SignedTx, s *State) error{
+	err := ValidateTx(tx, s) 
+	if err != nil{
+		return err 
+	}
+
+	s.Balances[tx.From] -= tx.Cost(s.IsBCIP1Fork()) 
+	s.Balances[tx.To] += tx.Value 
+
+	s.Account2Nonce[tx.From] = tx.Nonce 
+
+	return nil 
+
+}
+
+func ValidateTx(tx SignedTx, s *State) error{
+	ok, err := tx.IsAuthentic() 
+	if err != nil{
+		return err 
+	}
+
+	if !ok{
+		return fmt.Errorf("wrong Transaction sender '%s' is forged", tx.From.String())
+	}
+
+	expectedNonce := s.GetNextAccountNonce(tx.From) 
+	if tx.Nonce != expectedNonce{
+		return fmt.Errorf("wrong Transaction sender '%s' next nonce must be '%d', not '%d'", tx.From.String(), expectedNonce, tx.Nonce) 
+
+	}
+
+	if s.IsBCIP1Fork(){
+		if tx.Gas != TxGas{
+			return fmt.Errorf("insufficient Transaction Gas %v. required: %v", tx.Gas, TxGas)
+		}
+
+		if tx.GasPrice < TxGasPriceDefault{
+			return fmt.Errorf("insufficient Transaction gasPrice %v. required at least: %v", tx.GasPrice, TxGasPriceDefault)
+		}
+	} else{
+		if tx.Gas != 0 || tx.GasPrice != 0{
+			return fmt.Errorf("invalid Transaction. `Gas`and `GasPrice` cant't be populated before BC1 fork is active")
+		}
+	}
+
+	if tx.Cost(s.IsBCIP1Fork()) > s.Balances[tx.From]{
+		return fmt.Errorf("wrong Transaction. Sender '%s' balance is %d Cubes. Transaction cost is %d Cube(s)", tx.From.String(), s.Balances[tx.From], tx.Cost(s.IsBCIP1Fork()))
+	}
+
 	return nil 
 }

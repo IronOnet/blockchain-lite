@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	//"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 const BlockReward = 100 
@@ -43,7 +43,7 @@ type BlockHeader struct{
 	Number uint64 `json:"number"` 
 	Nonce uint32 `json:nonce`
 	Time uint64 `json:"time"` 
-	Miner Address `json:miner`
+	Miner common.Address `json:miner`
 }
 
 type BlockFS struct{
@@ -51,7 +51,7 @@ type BlockFS struct{
 	Value Block `json:block`
 }
 
-func NewBlock(parent Hash, number uint64, nonce uint32, time uint64, miner Address, txs []SignedTx) Block{
+func NewBlock(parent Hash, number uint64, nonce uint32, time uint64, miner common.Address, txs []SignedTx) Block{
 	return Block{BlockHeader{parent, number, nonce, time, miner}, txs}
 }
 

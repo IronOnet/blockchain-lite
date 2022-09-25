@@ -2,7 +2,7 @@ package core
 
 import (
 	"encoding/json" 
-	"ioutil" 
+	"io/ioutil" 
 	
 	"github.com/ethereum/go-ethereum/common"
 )
